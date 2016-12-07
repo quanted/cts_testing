@@ -9,7 +9,7 @@ from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 
 
-def unitTestsInputPage(request, model='none', header='none'):
+def unitTestsInputPage(request, model='none', header='CTS'):
 	"""
 	Shows p-chem table (html, css, js)
 	"""
