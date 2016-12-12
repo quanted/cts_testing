@@ -1,17 +1,17 @@
 <!--start 04uberbatchinput-->
 	<div class="articles">
 
-		<form method="post" id="form1" action="/cts/{{model}}/batchoutput">
+		<form method="post" id="form1">
 	
 		<h2 class="model_header">{{ model_attributes }}</h2>
 		<ul class="nobullet">
 			<!-- <li><a href="/csvs/{{model}}_batch.csv">Please download, fill, and upload this CSV file for batch calculation. </a></li> -->
-			<li><i>Upload a text file of chemicals organized into a single column </i>(<a href="/static/docs/sample_batch.txt" download>sample batch input</a>):</li>
+			<li><i>Upload CSV of CTS p-chem calculator desktop values (todo: include sample csv): </i></li>
 		</ul>
 		<ul class="nobullet">
 		<li>
 		<!-- <form method="post" id="form1" action="/cts/{{model}}/batchoutput"> -->
-			File to upload: <input type="file" id="upfile1" name="upfile" class="required input_button" accept=".txt" />
+			File to upload: <input type="file" id="upfile1" name="upfile" class="required input_button" accept=".csv" />
 			<br>
 
 			<!-- section of html to load once chemicals file is uploaded -->

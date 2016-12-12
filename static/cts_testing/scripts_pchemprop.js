@@ -2,22 +2,6 @@ var pchempropsDefaults = ["chemaxon", "ion_con", "kow_no_ph", "kow_wph"]; //chec
 
 $(document).ready(function() {
 
-    if ( typeof uberNavTabs == 'function' ) {
-        uberNavTabs(
-            ["Chemical", "ChemCalcs"],
-            {   "isSubTabs":true,
-                "Chemical": [".tab_chemicalButtons"] }
-        );
-    }
-
-    $('#chemEditDraw_button').click(function() {
-        $('#chemEditDraw').show();
-    });
-
-    $('#chemEditLookup_button').click(function() {
-        $('#chemEditLookup').show();
-    });
-
     var isAllChecked_ChemCalcs = 1;
 
     var noOfInput_ChemCalcs = []

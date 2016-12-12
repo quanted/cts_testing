@@ -1,0 +1,230 @@
+<script type="text/javascript" src="/static/stylesheets/jquery.validate.js"></script>
+
+<script type="text/javascript">
+
+var UnitTest = {
+
+	webservice_data: [],
+	webservice_data_parsed: [],  // p-chem responses wrapped like csv_pchem_array
+	csv_pchem_array: [],
+	batch_chems: [],  // "nodes" replacement
+	final_data_array: {
+		'input_csv_data': [],  // e.g., [{prop-key: prop-val}, ...
+		'ws_csv_data': [],
+		'std_dev': []
+	},  // csv_pchem_array, webserver_data, std dev
+
+	init: function (settings) {
+		// any config stuff, initializing..
+		UnitTest.setup();
+	},
+
+	setup: function () {
+
+		$('.input_nav').hide();
+
+		$('#upfile1').change(function (evt) {
+
+			var data = null;
+			var file = evt.target.files[0];
+			var final_csv_array = [];
+
+			var reader = new FileReader();
+			reader.readAsText(file);
+			reader.onload = function (e) {
+
+				var csv_data = reader.result;
+				var csv_array = csv_data.split('\n');  // array item is row in csv
+				csv_array.pop();  // remove trailing blank array
+
+				var headers = csv_array[0].split(',');
+
+				for (var i = 1; i < csv_array.length; i++) {
+					final_csv_array.push(csv_array[i].split(','));  // csv --> array of arrays
+					UnitTest.csv_pchem_array.push([]);
+					var pchem_array = csv_array[i].split(',');  // an array of pchem data
+					for (var j = 0; j < pchem_array.length; j++) {
+						var data_obj = {};
+						data_obj[headers[j]] = final_csv_array[i - 1][j];
+						UnitTest.csv_pchem_array[i - 1].push(data_obj);
+					}
+
+				}
+
+				if (final_csv_array && final_csv_array.length > 0) {
+					UnitTest.displayCSVChemicals(final_csv_array);
+				}
+				else {
+					alert("No data imported");
+				}
+			};
+			reader.onerror = function () {
+				alert("Unable to read " + file.fileName);
+			};
+
+		});
+
+		$('.submit').click(function (event) {
+		
+			// cts_pchempro_requests.html in ubertool_cts/templates/ functions:
+	        checkedCalcsAndProps = buildCheckedCalcsAndProps();
+	        blockInterface(true);
+	        total_calls = calculateTotalCalls([UnitTest.batch_chems.length], checkedCalcsAndProps);
+	        calls_tracker = total_calls;
+
+	        UnitTest.pchemRequests(checkedCalcsAndProps);
+
+		});
+
+	},
+
+	pchemRequests: function (checkedCalcsAndProps) {
+
+		var socket;
+
+		// connect to socket.io!
+        if (nodejs_host == 'nginx') {
+            socket = io.connect();  // docker way
+        }
+        else {
+            if (nodejs_port && nodejs_port != 80) {
+                socket = io.connect('http://' + nodejs_host + ':' + nodejs_port, {'force new connection': true});
+            }
+            else {
+                socket = io.connect(nodejs_host, {'force new connection': true});
+            }
+        }
+
+		var pchem_data = {
+	        'chemical': structure,
+	        'ph': kowPH,
+	      	'nodes': UnitTest.batch_chems,
+	        'pchem_request': checkedCalcsAndProps
+	    };
+
+	    var cache = [];
+	    var pchem_data_json = JSON.stringify(pchem_data, function(key, value) {
+	        if (typeof value === 'object' && value !== null) {
+	            if (cache.indexOf(value) !== -1) {
+	                // Circular reference found, discard key
+	                return;
+	            }
+	            // Store value in our collection
+	            cache.push(value);
+	        }
+	        return value;
+	    });
+	    cache = null; // Enable garbage collection
+
+	    socket.emit('get_data', pchem_data_json);
+
+	    socket.on('message', function (data) {
+
+	    	calls_tracker--;
+            console.log("calls tracker: " + calls_tracker);
+
+            var data_obj = JSON.parse(data);
+
+            var ws_data_obj = {};
+            ws_data_obj['smiles'] = data_obj['chemical'];
+            ws_data_obj['prop'] = data_obj['prop'] + " (" + data_obj['calc'] + ")";
+            ws_data_obj['data'] = {};
+            ws_data_obj.data[ws_data_obj['prop']] = data_obj['data'];
+            
+            // var smiles_index = UnitTest.webservice_data.map(function(o) { 
+            // 	return o.smiles; 
+            // }).indexOf(ws_data_obj['smiles']);  // search for chemical already in ws data set
+
+            // get index of array where its first object's smiles == ws_data_obj['smiles']:
+            for (var i = 0; i < UnitTest.webservice_data.length; i++) {
+            	var smiles_index = UnitTest.webservice_data[i].map(function (o) {
+            		// add data to array with same smiles..
+            		return o.smiles;
+            	}).indexOf(ws_data_obj['smiles']);
+            }
+
+
+            if (smiles_index < 0) {
+            	// smiles not already in ws data set, so add it
+            	UnitTest.webservice_data.push([]);
+            	UnitTest.webservice_data[0].push({'smiles': ws_data_obj['smiles']});  // add smiles:val as 1st element
+            	UnitTest.webservice_data[0].push(ws_data_obj['data']);  // add prop:data
+            }
+            else {
+            	// place data in existing ws data array based on smiles
+            	UnitTest.webservice_data[smiles_index].push(ws_data_obj['data']);
+            }
+
+
+
+            // // UnitTest.webservice_data.push(data_obj);
+            // // UnitTest.webservice_data.push(data_obj.data);
+			
+			if (calls_tracker <= 0) {
+	            console.log("All data retrieved!");
+	            blockInterface(false);
+
+	            // compare ws data with csv data:
+	            // build object from webservice_data that's
+	            // the same as UnitTest.csv_pchem_array
+
+	            UnitTest.final_data_array['input_csv_data'] = UnitTest.final_csv_array;
+
+	            for (var i = 0; i < UnitTest.csv_pchem_array.length; i++) {
+
+	            	for (var j = 0; j < UnitTest.csv_pchem_array[i].length; j++) {
+
+	            		var prop_name = UnitTest.csv_pchem_array[i][j];
+
+
+	            	}
+
+	            }
+
+	            // for (var i = 0; i < UnitTest.webservice_data.length; i++) {
+
+	            // 	var prop_name = 
+
+	            // 	UnitTest.final_data_array.push();
+
+	            // }
+
+			}
+
+		});
+	},
+
+	displayCSVChemicals: function (csv_array) {
+		var batch_chems = [];
+		for (var i = 0; i < csv_array.length; i++) {
+			// build smiles array (1st item of each csv item, skip 1st one, which is headers)
+			batch_chems.push(csv_array[i][0]);
+			UnitTest.batch_chems.push({'smiles': csv_array[i][0]});  // "nodes" replacement
+		}
+
+		// only allow ten max for now:
+		if (batch_chems.length > 10) {
+			alert("Early batch version is only accepting a maximum of 10 chemicals at a time. This will be increased in the near future. Try reducing the number of chemicals in the file, refresh the page, and try again..");
+			return;
+		}
+
+		var batch_inputs = $('#pchem_batch_wrap');
+		$(batch_inputs).show();
+		$(batch_inputs).children().show();
+		$('#cont, #reactionpathways').hide();  // todo: separate html and js in ts_gentrans_tree.html
+
+		for (chem in batch_chems) {
+			$('#batch_list').append('<li>' + batch_chems[chem] + '</li>');
+		}
+
+		$('#batchfilewrap').show();
+		$('#pchemprop_table').show();
+		$('.input_nav').show();
+	}
+
+};
+$(document).ready(UnitTest.init);
+
+</script>
+</form> <!-- end submit form -->
+</div> <!-- End "articles" div -->
