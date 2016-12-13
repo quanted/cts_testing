@@ -4,7 +4,7 @@
 
 var UnitTest = {
 
-	webservice_data: [],
+	webservice_data: [],  // original pchem data from calc services
 	webservice_data_parsed: [],  // p-chem responses wrapped like csv_pchem_array
 	csv_pchem_array: [],
 	batch_chems: [],  // "nodes" replacement
@@ -125,69 +125,16 @@ var UnitTest = {
 
             var data_obj = JSON.parse(data);
 
-            var ws_data_obj = {};
-            ws_data_obj['smiles'] = data_obj['chemical'];
-            ws_data_obj['prop'] = data_obj['prop'] + " (" + data_obj['calc'] + ")";
-            ws_data_obj['data'] = {};
-            ws_data_obj.data[ws_data_obj['prop']] = data_obj['data'];
-            
-            // var smiles_index = UnitTest.webservice_data.map(function(o) { 
-            // 	return o.smiles; 
-            // }).indexOf(ws_data_obj['smiles']);  // search for chemical already in ws data set
+            UnitTest.webservice_data.push(data_obj);
 
-            // get index of array where its first object's smiles == ws_data_obj['smiles']:
-            for (var i = 0; i < UnitTest.webservice_data.length; i++) {
-            	var smiles_index = UnitTest.webservice_data[i].map(function (o) {
-            		// add data to array with same smiles..
-            		return o.smiles;
-            	}).indexOf(ws_data_obj['smiles']);
-            }
-
-
-            if (smiles_index < 0) {
-            	// smiles not already in ws data set, so add it
-            	UnitTest.webservice_data.push([]);
-            	UnitTest.webservice_data[0].push({'smiles': ws_data_obj['smiles']});  // add smiles:val as 1st element
-            	UnitTest.webservice_data[0].push(ws_data_obj['data']);  // add prop:data
-            }
-            else {
-            	// place data in existing ws data array based on smiles
-            	UnitTest.webservice_data[smiles_index].push(ws_data_obj['data']);
-            }
-
-
-
-            // // UnitTest.webservice_data.push(data_obj);
-            // // UnitTest.webservice_data.push(data_obj.data);
-			
 			if (calls_tracker <= 0) {
 	            console.log("All data retrieved!");
 	            blockInterface(false);
 
-	            // compare ws data with csv data:
-	            // build object from webservice_data that's
-	            // the same as UnitTest.csv_pchem_array
+	            // once all the webservice data is collected,
+	            // convert it to the same format as csv_pchem_array!
 
-	            UnitTest.final_data_array['input_csv_data'] = UnitTest.final_csv_array;
-
-	            for (var i = 0; i < UnitTest.csv_pchem_array.length; i++) {
-
-	            	for (var j = 0; j < UnitTest.csv_pchem_array[i].length; j++) {
-
-	            		var prop_name = UnitTest.csv_pchem_array[i][j];
-
-
-	            	}
-
-	            }
-
-	            // for (var i = 0; i < UnitTest.webservice_data.length; i++) {
-
-	            // 	var prop_name = 
-
-	            // 	UnitTest.final_data_array.push();
-
-	            // }
+	            UnitTest.parseWebserviceDataForCSV();
 
 			}
 
@@ -220,6 +167,25 @@ var UnitTest = {
 		$('#batchfilewrap').show();
 		$('#pchemprop_table').show();
 		$('.input_nav').show();
+	},
+
+	parseWebserviceDataForCSV: function () {
+
+		var ws_data = UnitTest.webservice_data;
+
+		for (var i = 0; i < ws_data.length; i++) {
+
+			// build array to match UnitTest.csv_pchem_array
+
+		}
+
+		// data object from ws converted to csv object
+		var ws_data_obj = {};
+        ws_data_obj['smiles'] = data_obj['chemical'];
+        ws_data_obj['prop'] = data_obj['prop'] + " (" + data_obj['calc'] + ")";
+        ws_data_obj['data'] = {};
+        ws_data_obj.data[ws_data_obj['prop']] = data_obj['data'];
+
 	}
 
 };
