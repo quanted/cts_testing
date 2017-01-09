@@ -1,7 +1,7 @@
 from django.conf.urls import url
 # from django.contrib import admin
 # admin.autodiscover()
-from cts_testing import views
+from cts_app.cts_testing import views
 
 
 urlpatterns = [
