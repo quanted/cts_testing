@@ -14,6 +14,8 @@ var UnitTest = {
 		'ws_csv_data': [],
 		'std_dev': []
 	},  // csv_pchem_array, webserver_data, std dev
+	calls_tracker: 0,
+	total_calls: 0,
 
 	init: function (settings) {
 		// any config stuff, initializing..
@@ -83,8 +85,8 @@ var UnitTest = {
 			// cts_pchempro_requests.html in ubertool_cts/templates/ functions:
 	        checkedCalcsAndProps = buildCheckedCalcsAndProps();
 	        blockInterface(true);
-	        total_calls = calculateTotalCalls([UnitTest.batch_chems.length], checkedCalcsAndProps);
-	        calls_tracker = total_calls;
+	        UnitTest.total_calls = calculateTotalCalls([UnitTest.batch_chems.length], checkedCalcsAndProps);
+	        UnitTest.calls_tracker = UnitTest.total_calls;
 
 	        UnitTest.pchemRequests(checkedCalcsAndProps);
 
@@ -134,14 +136,15 @@ var UnitTest = {
 
 	    socket.on('message', function (data) {
 
-	    	calls_tracker--;
-            console.log("calls tracker: " + calls_tracker);
+	    	UnitTest.calls_tracker--;
+            console.log("calls tracker: " + UnitTest.calls_tracker);
+            updateProgressBar(UnitTest.calls_tracker, UnitTest.total_calls);  // from cts_gentrans_tree
 
             var data_obj = JSON.parse(data);
 
             UnitTest.webservice_data.push(data_obj);
 
-			if (calls_tracker <= 0) {
+			if (UnitTest.calls_tracker <= 0) {
 	            console.log("All data retrieved!");
 	            blockInterface(false);
 
@@ -185,7 +188,7 @@ var UnitTest = {
 
 	parseWebserviceDataForCSV: function () {
 
-		var ws_data = UnitTest.webservice_data;
+		var ws_data_obj = UnitTest.webservice_data;
 
 		// will the ws and csv smiles always align???
 		// NOTE: currently making a new row per ws data,
@@ -198,10 +201,14 @@ var UnitTest = {
 		for (var i = 0; i < UnitTest.csv_pchem_array.length; i++) {
 
 			// loopin each row..
+			var csv_smiles_obj = UnitTest.csv_pchem_array[i][0];
+			var csv_smiles = csv_smiles_obj['smiles'];
 
 			var new_row = [];
-			new_row.push(UnitTest.csv_pchem_array[i][0]);  // smiles
+			new_row.push(csv_smiles_obj);  // smiles
 
+			// this loop could only loop set of csv data based off
+			// pchem table selection instead of looping entire csv
 			for (var csv_index in UnitTest.csv_pchem_array[i]) {
 
 				// loopin key:val obj of csv row's data..
@@ -210,39 +217,107 @@ var UnitTest = {
 				var csv_key = Object.keys(csv_pair)[0];  // should only be one item
 				var csv_val = Number(csv_pair[csv_key]);
 
-				for (var j = 0; j < ws_data.length; j++) {
+				for (var j = 0; j < ws_data_obj.length; j++) {
 
 					// loopin ws data to match csv data..
 
-					var smiles_ws = ws_data[j]['chemical'];
-					var prop_ws = ws_data[j]['prop'];
-					var calc_ws = ws_data[j]['calc'];
-					var data_ws = ws_data[j]['data'];
+					var smiles_ws = ws_data_obj[j]['chemical'];
+					var prop_ws = ws_data_obj[j]['prop'];
+					var calc_ws = ws_data_obj[j]['calc'];
+					var data_ws = ws_data_obj[j]['data'];
 
-					if (csv_key.indexOf(calc_ws) > -1 && csv_key.indexOf(prop_ws) > -1) {
+					var csv_match_header = csv_key.indexOf(calc_ws) > -1 && csv_key.indexOf(prop_ws) > -1 && csv_smiles == smiles_ws;
+
+					var csv_match_pka = (csv_key.indexOf('pka') > -1 && prop_ws == 'ion_con' && csv_key.indexOf(calc_ws) > -1) && csv_smiles == smiles_ws;
+
+					if (csv_match_header || csv_match_pka) {
 
 						// only build output csv with selected calcs-props
 						// values for both csv and ws data.
 
-						var csv_key_new = csv_key + " csv";
-						var csv_obj = {};
-						csv_obj[csv_key_new] = csv_val;
-						new_row.push(csv_obj);
+						var csv_key_ws = "";  // output csv key for ws data
+						var csv_key_input = "";  // output csv key for input csv data
 
-						csv_key_new = csv_key + " ws";
-						var csv_obj = {};
-						csv_obj[csv_key_new] = data_ws;
-						new_row.push(csv_obj);
+						if (prop_ws == 'ion_con') {
+							// headers look like "pka_n", where n > 0
+							console.log("what do here?");
 
-						// todo: make calculations separate UnitTest function
-						var data_diff = Math.abs(csv_val - data_ws);
-						var data_avg = (csv_val + data_ws) / 2;
-						var percent_diff = 100 * (data_diff / data_avg);
+							// are there multiple pka values per calc from desktop models???
 
-						csv_key_new = csv_key + " % diff";
-						var csv_obj = {};
-						csv_obj[csv_key_new] = percent_diff;
-						new_row.push(csv_obj);
+							// input csv data:
+							csv_key_input = csv_key + " CSV";
+							var csv_obj = {};
+							csv_obj[csv_key_input] = csv_val;
+							if (!(UnitTest.containsObject(csv_obj, new_row))) {
+								new_row.push(csv_obj);  // add to list if not already there
+							}
+
+							// assumption: 1 pka val from csv, ws data is object with
+							// keys pKa and pKb, with vals being array of pka vals.
+							// but what about sparc???
+							for (var pka_type in data_ws) {
+								var n = 1;
+								for (var pka in data_ws[pka_type]) {
+									csv_key_ws = pka_type + '_' + n + ' (' + calc_ws + ')';
+									var csv_obj = {};
+									var csv_pka_val = data_ws[pka_type][n - 1]; 
+									csv_obj[csv_key_ws + ' WS'] = csv_pka_val;
+									// new_row.push(csv_obj);
+									if (!(UnitTest.containsObject(csv_obj, new_row))) {
+										new_row.push(csv_obj);  // add to list if not already there
+									}
+
+									// todo: make calculations separate UnitTest function
+									// percent difference:
+									var data_diff = Math.abs(csv_val - csv_pka_val);
+									var data_avg = (csv_val + csv_pka_val) / 2;
+									var percent_diff = 100 * (data_diff / data_avg);
+									// csv_key_input = csv_key + " % diff";
+									csv_key_input = csv_key_ws + " %DIFF";
+									var csv_obj = {};
+									csv_obj[csv_key_input] = percent_diff;
+									new_row.push(csv_obj);
+
+									n++;
+								}
+								n = 1;
+							}
+
+						}
+						else {
+							if ('method' in ws_data_obj[j]) {
+								// chemaxon kow_wph or kow_no_ph:
+								csv_key_ws = csv_key + ws_data_obj[j]['method'] + " WS";
+							}
+							else {
+								csv_key_ws = csv_key + " WS";
+							}
+
+							// input csv data:
+							csv_key_input = csv_key + " CSV";
+							var csv_obj = {};
+							csv_obj[csv_key_input] = csv_val;
+							if (!(UnitTest.containsObject(csv_obj, new_row))) {
+								new_row.push(csv_obj);  // add to list if not already there
+							}
+
+							// web service data:
+							var csv_obj = {};
+							csv_obj[csv_key_ws] = data_ws;
+							new_row.push(csv_obj);
+
+							// todo: make calculations separate UnitTest function
+							// percent difference:
+							var data_diff = Math.abs(csv_val - data_ws);
+							var data_avg = (csv_val + data_ws) / 2;
+							var percent_diff = 100 * (data_diff / data_avg);
+							// csv_key_input = csv_key + " % diff";
+							csv_key_input = csv_key_ws + " %DIFF";
+							var csv_obj = {};
+							csv_obj[csv_key_input] = percent_diff;
+							new_row.push(csv_obj);
+
+						}
 
 					}
 
@@ -256,44 +331,51 @@ var UnitTest = {
 		var csv_output_data = UnitTest.csv_output_array;
 		UnitTest.sendCSVDataToServer(csv_output_data);
 		UnitTest.csv_output_array = [];  // garbage collection
+		UnitTest.webservice_data = [];  // garbage collection
+		UnitTest.csv_pchem_array = [];  // garbage collection
+		UnitTest.calls_tracker = 0;
+		UnitTest.total_calls = 0;
 
 	},
 
 	sendCSVDataToServer: function (csv_output_data) {
 
-		// creates a csv from UnitTest.csv_output_array data
+		// +++++ todo: make this its own function +++++
+        var cache = [];
+		json_data = JSON.stringify(csv_output_data, function(key, value) {
+		    if (typeof value === 'object' && value !== null) {
+		        if (cache.indexOf(value) !== -1) {
+		            return;  // Circular reference found, discard key
+		        }
+		        cache.push(value);
+		    }
+		    return value;
+		});
+		cache = null;  // Enable garbage collection
+		// +++++++++++++++++++++++++++++++++++++++++++++
 
-		// traditional way: redirect to csv file location
-		// location.replace('/to/csv/file');  // widely supported
-		// html5 way: download property in anchor tag
-		// $('div below pchem table').append('<a download="nameofcsvfile" href="/to/csv/file">Download CSV</a>');
+		$('table.getpdf').html("");
+		$('form').append('<table class="getpdf"></table>');
+		$('<tr style="display:none"><td><input type="hidden" name="csv_data"></td></tr>')
+				.appendTo('.getpdf')
+				.find('input')
+				.val(json_data);
 
-		// location.replace('/cts/testing/csv');
-		// $('#csvExport').click(function () {
+		$('form').attr({'action': 'csv', 'method': 'POST'}).submit();
 
-	        var cache = [];
-			json_data = JSON.stringify(csv_output_data, function(key, value) {
-			    if (typeof value === 'object' && value !== null) {
-			        if (cache.indexOf(value) !== -1) {
-			            return;  // Circular reference found, discard key
-			        }
-			        cache.push(value);
-			    }
-			    return value;
-			});
-			cache = null;  // Enable garbage collection
+	},
 
-			// $('table.getpdf').html("");
-			$('form').append('<table class="getpdf"></table>');
-			$('<tr style="display:none"><td><input type="hidden" name="csv_data"></td></tr>')
-					.appendTo('.getpdf')
-					.find('input')
-					.val(json_data);
-
-			$('form').attr({'action': 'csv', 'method': 'POST'}).submit();
-
-		// });
-
+	containsObject(obj, arr) {
+		for (var i = 0; i < arr.length; i++) {
+			// if (arr[i] === obj) {
+			// 	return true;
+			// }
+			// maybe checking keys will work
+			if (Object.keys(arr[i])[0] == Object.keys(obj)[0]) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 };
