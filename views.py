@@ -56,3 +56,61 @@ def unitTestsPage(request, model='pchemprop', header='CTS'):
 	response = HttpResponse()
 	response.write(html)
 	return response
+
+
+def createCSV(request):
+	"""
+	Creates CSV for p-chem unit test data,
+	with input csv data, cts web service data,
+	and percent difference.
+	"""
+	import csv
+	import json
+
+	from django.utils.six.moves import range
+	from django.http import StreamingHttpResponse
+
+
+	class Echo(object):
+		"""
+		An object that implements just the write method of the file-like
+		interface.
+		"""
+		def write(self, value):
+			"""Write the value by returning it, instead of storing in a buffer"""
+			return value
+
+	def some_streaming_csv_view(request):
+		"""A view that streams a large CSV file"""
+		# Generate a sequence of rows. The range is based on the max num of
+		# rows that can be handled by a single sheet in most spreadsheet apps.
+		# rows = (["Row {}".format(idx), str(idx)] for idx in range(65536))
+
+		rows = json.loads(request.POST['csv_data'])  # each row from rows is list of header:val objects
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+
+		# build headers list for ordering values:
+		headers = []
+		# for row_obj in rows[0]:
+		# 	headers.append(row_obj.keys()[0])
+
+		csv_rows = []
+		for row in rows:
+			csv_data_row = []
+			# row is list of header:val for that chemical
+			for row_obj in row:
+				header = row_obj.keys()[0]
+				if not header in headers:
+					headers.append(header)
+				header_index = headers.index(header)
+				csv_data_row.insert(header_index, row_obj[header])
+			csv_rows.append(csv_data_row)
+
+		csv_rows.insert(0, headers)
+		response = StreamingHttpResponse((writer.writerow(row) for row in csv_rows),
+			content_type="text/csv")
+		response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
+		return response
+
+	return some_streaming_csv_view(request)

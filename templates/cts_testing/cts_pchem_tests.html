@@ -7,6 +7,7 @@ var UnitTest = {
 	webservice_data: [],  // original pchem data from calc services
 	webservice_data_parsed: [],  // p-chem responses wrapped like csv_pchem_array
 	csv_pchem_array: [],
+	csv_output_array: [],
 	batch_chems: [],  // "nodes" replacement
 	final_data_array: {
 		'input_csv_data': [],  // e.g., [{prop-key: prop-val}, ...
@@ -41,8 +42,21 @@ var UnitTest = {
 
 				for (var i = 1; i < csv_array.length; i++) {
 					final_csv_array.push(csv_array[i].split(','));  // csv --> array of arrays
+
 					UnitTest.csv_pchem_array.push([]);
 					var pchem_array = csv_array[i].split(',');  // an array of pchem data
+
+					// array item is per chemical, and is one big object instead
+					// of array of array with items being key:val..
+
+					// var data_obj = {};
+
+					// for (var j = 0; j < pchem_array.length; j++) {
+					// 	data_obj[headers[j]] = final_csv_array[i -1][j];
+					// }
+					// UnitTest.csv_pchem_array[i - 1].push(data_obj);
+					// UnitTest.csv_pchem_array.push(data_obj);
+
 					for (var j = 0; j < pchem_array.length; j++) {
 						var data_obj = {};
 						data_obj[headers[j]] = final_csv_array[i - 1][j];
@@ -173,18 +187,112 @@ var UnitTest = {
 
 		var ws_data = UnitTest.webservice_data;
 
-		for (var i = 0; i < ws_data.length; i++) {
+		// will the ws and csv smiles always align???
+		// NOTE: currently making a new row per ws data,
+		// which is incorrect. There will be more ws datum than rows.
 
-			// build array to match UnitTest.csv_pchem_array
+		// Maybe the main loop should be the CSV data instead,
+		// then loop ws data for each CSV datum.
+
+
+		for (var i = 0; i < UnitTest.csv_pchem_array.length; i++) {
+
+			// loopin each row..
+
+			var new_row = [];
+			new_row.push(UnitTest.csv_pchem_array[i][0]);  // smiles
+
+			for (var csv_index in UnitTest.csv_pchem_array[i]) {
+
+				// loopin key:val obj of csv row's data..
+
+				var csv_pair = UnitTest.csv_pchem_array[i][csv_index];
+				var csv_key = Object.keys(csv_pair)[0];  // should only be one item
+				var csv_val = Number(csv_pair[csv_key]);
+
+				for (var j = 0; j < ws_data.length; j++) {
+
+					// loopin ws data to match csv data..
+
+					var smiles_ws = ws_data[j]['chemical'];
+					var prop_ws = ws_data[j]['prop'];
+					var calc_ws = ws_data[j]['calc'];
+					var data_ws = ws_data[j]['data'];
+
+					if (csv_key.indexOf(calc_ws) > -1 && csv_key.indexOf(prop_ws) > -1) {
+
+						// only build output csv with selected calcs-props
+						// values for both csv and ws data.
+
+						var csv_key_new = csv_key + " csv";
+						var csv_obj = {};
+						csv_obj[csv_key_new] = csv_val;
+						new_row.push(csv_obj);
+
+						csv_key_new = csv_key + " ws";
+						var csv_obj = {};
+						csv_obj[csv_key_new] = data_ws;
+						new_row.push(csv_obj);
+
+						// todo: make calculations separate UnitTest function
+						var data_diff = Math.abs(csv_val - data_ws);
+						var data_avg = (csv_val + data_ws) / 2;
+						var percent_diff = 100 * (data_diff / data_avg);
+
+						csv_key_new = csv_key + " % diff";
+						var csv_obj = {};
+						csv_obj[csv_key_new] = percent_diff;
+						new_row.push(csv_obj);
+
+					}
+
+				}
+
+			}
+			UnitTest.csv_output_array.push(new_row);
 
 		}
+		console.log(UnitTest.csv_output_array);
+		var csv_output_data = UnitTest.csv_output_array;
+		UnitTest.sendCSVDataToServer(csv_output_data);
+		UnitTest.csv_output_array = [];  // garbage collection
 
-		// data object from ws converted to csv object
-		var ws_data_obj = {};
-        ws_data_obj['smiles'] = data_obj['chemical'];
-        ws_data_obj['prop'] = data_obj['prop'] + " (" + data_obj['calc'] + ")";
-        ws_data_obj['data'] = {};
-        ws_data_obj.data[ws_data_obj['prop']] = data_obj['data'];
+	},
+
+	sendCSVDataToServer: function (csv_output_data) {
+
+		// creates a csv from UnitTest.csv_output_array data
+
+		// traditional way: redirect to csv file location
+		// location.replace('/to/csv/file');  // widely supported
+		// html5 way: download property in anchor tag
+		// $('div below pchem table').append('<a download="nameofcsvfile" href="/to/csv/file">Download CSV</a>');
+
+		// location.replace('/cts/testing/csv');
+		// $('#csvExport').click(function () {
+
+	        var cache = [];
+			json_data = JSON.stringify(csv_output_data, function(key, value) {
+			    if (typeof value === 'object' && value !== null) {
+			        if (cache.indexOf(value) !== -1) {
+			            return;  // Circular reference found, discard key
+			        }
+			        cache.push(value);
+			    }
+			    return value;
+			});
+			cache = null;  // Enable garbage collection
+
+			// $('table.getpdf').html("");
+			$('form').append('<table class="getpdf"></table>');
+			$('<tr style="display:none"><td><input type="hidden" name="csv_data"></td></tr>')
+					.appendTo('.getpdf')
+					.find('input')
+					.val(json_data);
+
+			$('form').attr({'action': 'csv', 'method': 'POST'}).submit();
+
+		// });
 
 	}
 
