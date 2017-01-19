@@ -5,15 +5,9 @@
 var UnitTest = {
 
 	webservice_data: [],  // original pchem data from calc services
-	webservice_data_parsed: [],  // p-chem responses wrapped like csv_pchem_array
 	csv_pchem_array: [],
 	csv_output_array: [],
 	batch_chems: [],  // "nodes" replacement
-	final_data_array: {
-		'input_csv_data': [],  // e.g., [{prop-key: prop-val}, ...
-		'ws_csv_data': [],
-		'std_dev': []
-	},  // csv_pchem_array, webserver_data, std dev
 	calls_tracker: 0,
 	total_calls: 0,
 
