@@ -6,7 +6,7 @@ from cts_app.cts_testing import views
 
 urlpatterns = [
 	# (r'^/?$', 'views.getCTSEndpoints'),
-	url(r'^$', views.unitTestsPage),
+	url(r'^$', views.validationTestPage),
 	url(r'^csv/?$', views.createCSV),
 	# url(r'^output/?$', views.unitTestsOutputPage)
 	# url(r'^swag/?$', views.getSwaggerJsonContent),

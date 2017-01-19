@@ -31,6 +31,7 @@ var UnitTest = {
 			var data = null;
 			var file = evt.target.files[0];
 			var final_csv_array = [];
+			UnitTest.csv_pchem_array = [];
 
 			var reader = new FileReader();
 			reader.readAsText(file);
@@ -47,17 +48,6 @@ var UnitTest = {
 
 					UnitTest.csv_pchem_array.push([]);
 					var pchem_array = csv_array[i].split(',');  // an array of pchem data
-
-					// array item is per chemical, and is one big object instead
-					// of array of array with items being key:val..
-
-					// var data_obj = {};
-
-					// for (var j = 0; j < pchem_array.length; j++) {
-					// 	data_obj[headers[j]] = final_csv_array[i -1][j];
-					// }
-					// UnitTest.csv_pchem_array[i - 1].push(data_obj);
-					// UnitTest.csv_pchem_array.push(data_obj);
 
 					for (var j = 0; j < pchem_array.length; j++) {
 						var data_obj = {};
@@ -81,15 +71,11 @@ var UnitTest = {
 		});
 
 		$('.submit').click(function (event) {
-		
-			// cts_pchempro_requests.html in ubertool_cts/templates/ functions:
-	        checkedCalcsAndProps = buildCheckedCalcsAndProps();
+	        checkedCalcsAndProps = buildCheckedCalcsAndProps();  // cts_pchem_requests func
 	        blockInterface(true);
 	        UnitTest.total_calls = calculateTotalCalls([UnitTest.batch_chems.length], checkedCalcsAndProps);
 	        UnitTest.calls_tracker = UnitTest.total_calls;
-
 	        UnitTest.pchemRequests(checkedCalcsAndProps);
-
 		});
 
 	},
@@ -330,11 +316,8 @@ var UnitTest = {
 		console.log(UnitTest.csv_output_array);
 		var csv_output_data = UnitTest.csv_output_array;
 		UnitTest.sendCSVDataToServer(csv_output_data);
-		UnitTest.csv_output_array = [];  // garbage collection
-		UnitTest.webservice_data = [];  // garbage collection
-		UnitTest.csv_pchem_array = [];  // garbage collection
-		UnitTest.calls_tracker = 0;
-		UnitTest.total_calls = 0;
+
+		UnitTest.garbageCollection();
 
 	},
 
@@ -367,15 +350,19 @@ var UnitTest = {
 
 	containsObject(obj, arr) {
 		for (var i = 0; i < arr.length; i++) {
-			// if (arr[i] === obj) {
-			// 	return true;
-			// }
-			// maybe checking keys will work
 			if (Object.keys(arr[i])[0] == Object.keys(obj)[0]) {
 				return true;
 			}
 		}
 		return false;
+	},
+
+	garbageCollection() {
+		// reinitialize vars and such for next run
+		UnitTest.csv_output_array = [];  // garbage collection
+		UnitTest.webservice_data = [];  // garbage collection
+		UnitTest.calls_tracker = 0;
+		UnitTest.total_calls = 0;
 	}
 
 };

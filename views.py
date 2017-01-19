@@ -1,5 +1,5 @@
 """
-Testing views - p-chem unit tests, and
+Testing views - p-chem validation tests, and
 eventually more!
 Dec. 2016
 """
@@ -10,14 +10,14 @@ from django.template.loader import render_to_string
 from django.conf import settings
 
 
-def unitTestsPage(request, model='pchemprop', header='CTS'):
+def validationTestPage(request, model='pchemprop', header='CTS'):
 	"""
 	Shows p-chem table (html, css, js)
 	"""
 	html = render_to_string('cts_testing/01cts_uberheader.html', {'title': header+' Unit Tests'})
 	html += render_to_string('cts_testing/04uberbatchinput.html', {
 				'model': model,
-				'model_attributes': header+' Unit Tests'})
+				'model_attributes': '{} {} Validation Tests'.format(header, model)})
 	html += render_to_string('cts_testing/04uberinput_jquery.html', { 'model': model}) # loads scripts_pchemprop.js
 
 	html += render_to_string('cts_testing/cts_pchem.html')
