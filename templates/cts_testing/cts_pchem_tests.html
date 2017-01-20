@@ -274,7 +274,7 @@ var UnitTest = {
 
 							if (calc_ws  == 'test' && prop_ws == 'vapor_press') {
 								// todo: move all unit conversion to backend
-								data_ws = (Math.pow(10, data_ws)).toExponential(2);
+								data_ws = Number((Math.pow(10, data_ws)).toExponential(2));
 							}
 
 							// input csv data:
