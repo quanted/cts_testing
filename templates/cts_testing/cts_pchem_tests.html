@@ -220,7 +220,6 @@ var UnitTest = {
 
 						if (prop_ws == 'ion_con') {
 							// headers look like "pka_n", where n > 0
-							console.log("what do here?");
 
 							// are there multiple pka values per calc from desktop models???
 
@@ -271,6 +270,11 @@ var UnitTest = {
 							}
 							else {
 								csv_key_ws = csv_key + " WS";
+							}
+
+							if (calc_ws  == 'test' && prop_ws == 'vapor_press') {
+								// todo: move all unit conversion to backend
+								data_ws = Math.toExponential(Math.pow(10, data_ws));
 							}
 
 							// input csv data:
