@@ -35,7 +35,7 @@ $(document).ready(function() {
             $(chkbox).prop('checked', true);
         }
         $('.chemaxon').fadeTo(0, 1); //highlight chemaxon column
-        $('#id_kow_ph').val(7.4);
+        $('#id_kow_ph').val(7.0);
     });
 
     //submit button logic:

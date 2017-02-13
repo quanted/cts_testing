@@ -40,7 +40,7 @@ def validationTestPage(request, model='pchemprop', header='CTS'):
 	html +=  render_to_string('cts_pchemprop_requests.html', 
 		{
 			'checkedCalcsAndProps': {},
-			'kow_ph': 7.4,
+			'kow_ph': 7.0,
 			'speciation_inputs': 'null',
 			'nodes': 'null',
 			'nodejs_host': settings.NODEJS_HOST,
