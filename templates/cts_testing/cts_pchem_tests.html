@@ -142,8 +142,11 @@ var UnitTest = {
 		var batch_chems = [];
 		for (var i = 0; i < csv_array.length; i++) {
 			// build smiles array (1st item of each csv item, skip 1st one, which is headers)
-			batch_chems.push(csv_array[i][0]);
-			UnitTest.batch_chems.push({'smiles': csv_array[i][0]});  // "nodes" replacement
+			var batch_chem_smiles = csv_array[i][0];
+			if (batch_chem_smiles.length > 1) {
+				batch_chems.push(batch_chem_smiles);
+				UnitTest.batch_chems.push({'smiles': batch_chem_smiles});  // "nodes" replacement
+			}
 		}
 
 		// only allow ten max for now:
@@ -195,7 +198,11 @@ var UnitTest = {
 
 				var csv_pair = UnitTest.csv_pchem_array[i][csv_index];
 				var csv_key = Object.keys(csv_pair)[0];  // should only be one item
-				var csv_val = Number(csv_pair[csv_key]);
+				var csv_val = csv_pair[csv_key];
+				if (csv_key != "smiles") {
+					csv_val = Number(csv_val);
+				}
+				
 
 				for (var j = 0; j < ws_data_obj.length; j++) {
 
