@@ -67,7 +67,8 @@ def createCSV(request):
 	import csv
 	import json
 	import datetime
-	from cts_app.cts_api import cts_rest
+	# from cts_app.cts_api import cts_rest
+	from cts_app.cts_calcs.calculator import Calculator
 	from django.http import StreamingHttpResponse
 
 
@@ -111,7 +112,7 @@ def createCSV(request):
 		response = StreamingHttpResponse((writer.writerow(row) for row in csv_rows),
 			content_type="text/csv")
 
-		jid = cts_rest.gen_jid()  # create timestamp
+		jid = Calculator().gen_jid()  # create timestamp
 		time_str = datetime.datetime.strptime(jid, '%Y%m%d%H%M%S%f').strftime('%A, %Y-%B-%d %H:%M:%S')
 
 		response['Content-Disposition'] = 'attachment;filename=' + "cts_pchem_unittest" + '_' + jid + '.csv'

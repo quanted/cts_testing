@@ -150,7 +150,8 @@ var UnitTest = {
 		}
 
 		// only allow ten max for now:
-		if (batch_chems.length > 10) {
+		// if (batch_chems.length > 10) {
+		if (batch_chems.length > 50) {
 			alert("Early batch version is only accepting a maximum of 10 chemicals at a time. This will be increased in the near future. Try reducing the number of chemicals in the file, refresh the page, and try again..");
 			return;
 		}
