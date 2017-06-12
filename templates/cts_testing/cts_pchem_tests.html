@@ -212,9 +212,10 @@ var UnitTest = {
 					var smiles_ws = ws_data_obj[j]['chemical'];
 					var prop_ws = ws_data_obj[j]['prop'];
 					var calc_ws = ws_data_obj[j]['calc'];
+					var method_ws = ws_data_obj[j]['method'];
 					var data_ws = ws_data_obj[j]['data'];
 
-					var csv_match_header = csv_key.indexOf(calc_ws) > -1 && csv_key.indexOf(prop_ws) > -1 && csv_smiles == smiles_ws;
+					var csv_match_header = csv_key.indexOf(calc_ws) > -1 && csv_key.indexOf(prop_ws) > -1 && csv_key.indexOf(method_ws) > -1 && csv_smiles == smiles_ws;
 
 					var csv_match_pka = (csv_key.indexOf('pka') > -1 && prop_ws == 'ion_con' && csv_key.indexOf(calc_ws) > -1) && csv_smiles == smiles_ws;
 
@@ -272,13 +273,14 @@ var UnitTest = {
 
 						}
 						else {
-							if ('method' in ws_data_obj[j]) {
-								// chemaxon kow_wph or kow_no_ph:
-								csv_key_ws = csv_key + ws_data_obj[j]['method'] + " WS";
-							}
-							else {
-								csv_key_ws = csv_key + " WS";
-							}
+							// if ('method' in ws_data_obj[j] && ws_data_obj[j]['method'] != null) {
+							// 	// chemaxon kow_wph or kow_no_ph:
+							// 	csv_key_ws = csv_key + ws_data_obj[j]['method'] + " WS";
+							// }
+							// else {
+							// 	csv_key_ws = csv_key + " WS";
+							// }
+							csv_key_ws = csv_key + " WS";
 
 							if (calc_ws  == 'test' && prop_ws == 'vapor_press') {
 								// todo: move all unit conversion to backend
