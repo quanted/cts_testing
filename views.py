@@ -4,10 +4,15 @@ eventually more!
 Dec. 2016
 """
 __author__='np'
-
+import csv
+import json
+import datetime
+# from cts_app.cts_api import cts_rest
+from django.http import StreamingHttpResponse
 from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.conf import settings
+from ..cts_calcs.calculator import Calculator
 
 
 def validationTestPage(request, model='pchemprop', header='CTS'):
@@ -64,13 +69,6 @@ def createCSV(request):
 	with input csv data, cts web service data,
 	and percent difference.
 	"""
-	import csv
-	import json
-	import datetime
-	# from cts_app.cts_api import cts_rest
-	from cts_app.cts_calcs.calculator import Calculator
-	from django.http import StreamingHttpResponse
-
 
 	class Echo(object):
 		"""
