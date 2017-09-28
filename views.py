@@ -7,6 +7,7 @@ __author__='np'
 import csv
 import json
 import datetime
+import os
 # from cts_app.cts_api import cts_rest
 from django.http import StreamingHttpResponse
 from django.http import HttpRequest, HttpResponse
@@ -117,3 +118,67 @@ def createCSV(request):
 		return response
 
 	return some_streaming_csv_view(request)
+
+
+def test_ws_page(request):
+	"""
+	TEST WS testing page at /cts/rest/testws
+	"""
+
+	#drupal template for header with bluestripe
+	#html = render_to_string('01epa_drupal_header.html', {})
+	html = render_to_string('01epa_drupal_header.html', {
+		'SITE_SKIN': os.environ['SITE_SKIN'],
+		'title': "CTS"
+	})
+
+	html += render_to_string('02epa_drupal_header_bluestripe_onesidebar.html', {})
+	html += render_to_string('03epa_drupal_section_title_cts.html', {})
+
+	html += render_to_string('06cts_ubertext_start_index_drupal.html', {
+		# 'TITLE': 'Calculate Chemical Speciation',
+		# 'TEXT_PARAGRAPH': xx
+	})
+
+	# inputPageFunc = getattr(inputmodule, model+'InputPage')  # function name = 'model'InputPage  (e.g. 'sipInputPage')
+	# html += inputPageFunc(request, model, header)
+	html += render_to_string('04cts_uberbatchinput.html', {
+			'model': 'TESTWS',
+			'model_attributes': 'TEST WS Batch Run'}, request=request)
+	html += render_to_string('04cts_uberbatchinput_jquery.html', {'model':'TESTWS', 'header': ""})
+
+	html += render_to_string('04cts_uberinput_jquery.html', { 'model': "pchemprop"}) # loads scripts_pchemprop.js
+
+	# html += render_to_string('cts_testing/cts_pchem_testws.html')
+	# html += render_to_string('cts_testws_page.html', {})
+	html += """
+	<div id="pchem_batch_wrap" hidden>
+		<h3>Select p-chem properties for batch chemicals</h3>
+	"""
+
+	html += render_to_string('cts_testing/cts_pchem_testws.html', {})
+
+	html += """
+		<div class="input_nav">
+			<div class="input_right">
+				<input type="button" value="Clear" id="clearbutton" class="input_button">
+				<input class="testws-submit input_button" type="submit" value="Submit">
+			</div>
+		</div>
+	</div>
+	"""
+
+	html += render_to_string('07ubertext_end_drupal.html', {})
+	# html += ordered_list(model='cts/' + model, page='input')
+
+	#scripts and footer
+	html += render_to_string('09epa_drupal_ubertool_css.html', {})
+	html += render_to_string('09epa_drupal_cts_css.html')
+
+	# sending request to template with scripts_jchem added (will this work if template imports js and isn't in template itself?)
+	html += render_to_string('09epa_drupal_cts_scripts.html', request=request)
+	html += render_to_string('10epa_drupal_footer.html', {})
+  
+	response = HttpResponse()
+	response.write(html)
+	return response
