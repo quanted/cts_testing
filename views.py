@@ -42,6 +42,8 @@ def validationTestPage(request, model='pchemprop', header='CTS'):
 	</div>
 	"""
 
+	html += render_to_string('cts_export.html', {}, request=request)  # carries csrf token
+
 	html += render_to_string('cts_downloads.html', {'run_data': 'null'})
 
 	html += '<link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">'
@@ -103,7 +105,7 @@ def createCSV(request):
 			csv_data_row = []
 			# row is list of header:val for that chemical
 			for row_obj in row:
-				header = row_obj.keys()[0]
+				header = list(row_obj.keys())[0]  # list() addition for py3 fix
 				if not header in headers:
 					headers.append(header)
 				header_index = headers.index(header)
