@@ -167,7 +167,7 @@ def test_ws_page(request):
 
 	html += """
 	<div id="pchem_batch_wrap" hidden>
-		<h3>Select p-chem properties for batch chemicals</h3>
+		<h3>Select physicochemical properties for batch chemicals</h3>
 	"""
 
 	html += render_to_string('cts_testing/cts_pchem_testws.html', {})
