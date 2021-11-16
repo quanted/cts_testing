@@ -42,13 +42,13 @@ def validationTestPage(request, model='pchemprop', header='CTS'):
 	</div>
 	"""
 
-	html += render_to_string('cts_export.html', {}, request=request)  # carries csrf token
+	html += render_to_string('cts_app/cts_export.html', {}, request=request)  # carries csrf token
 
-	html += render_to_string('cts_downloads.html', {'run_data': 'null'})
+	html += render_to_string('cts_app/cts_downloads.html', {'run_data': 'null'})
 
 	html += '<link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">'
 	# for pchemprop batch, use p-chem for selecting inputs for batch data:
-	html +=  render_to_string('cts_pchemprop_requests.html', 
+	html +=  render_to_string('cts_app/cts_pchemprop_requests.html', 
 		{
 			'checkedCalcsAndProps': {},
 			'kow_ph': 7.0,
@@ -58,7 +58,7 @@ def validationTestPage(request, model='pchemprop', header='CTS'):
 			'nodejs_port': settings.NODEJS_PORT
 		}
 	)
-	html += render_to_string('cts_gentrans_tree.html', {'gen_max': 0})
+	html += render_to_string('cts_app/cts_gentrans_tree.html', {'gen_max': 0})
 
 	html += render_to_string('cts_testing/cts_pchem_tests.html', {'model':model, 'header':header})
 
@@ -132,27 +132,27 @@ def test_ws_page(request):
 
 	#drupal template for header with bluestripe
 	#html = render_to_string('01cts_epa_drupal_header.html', {})
-	html = render_to_string('01cts_epa_drupal_header.html', {
+	html = render_to_string('cts_app/01cts_epa_drupal_header.html', {
 		'SITE_SKIN': os.environ['SITE_SKIN'],
 		'title': "CTS"
 	})
 
-	html += render_to_string('02epa_drupal_header_bluestripe_onesidebar.html', {})
-	html += render_to_string('03epa_drupal_section_title_cts.html', {"message": "", "version": os.getenv("CTS_VERSION")})
+	html += render_to_string('cts_app/02epa_drupal_header_bluestripe_onesidebar.html', {})
+	html += render_to_string('cts_app/03epa_drupal_section_title_cts.html', {"message": "", "version": os.getenv("CTS_VERSION")})
 
-	html += render_to_string('06cts_ubertext_start_index_drupal.html', {
+	html += render_to_string('cts_app/06cts_ubertext_start_index_drupal.html', {
 		# 'TITLE': 'Calculate Chemical Speciation',
 		# 'TEXT_PARAGRAPH': xx
 	})
 
 	# inputPageFunc = getattr(inputmodule, model+'InputPage')  # function name = 'model'InputPage  (e.g. 'sipInputPage')
 	# html += inputPageFunc(request, model, header)
-	html += render_to_string('04cts_uberbatchinput.html', {
+	html += render_to_string('cts_app/04cts_uberbatchinput.html', {
 			'model': 'TESTWS',
 			'model_attributes': 'TEST WS Batch Run'}, request=request)
-	html += render_to_string('04cts_uberbatchinput_jquery.html', {'model':'TESTWS', 'header': ""})
+	html += render_to_string('cts_app/04cts_uberbatchinput_jquery.html', {'model':'TESTWS', 'header': ""})
 
-	html += render_to_string('04cts_uberinput_jquery.html', { 'model': "pchemprop"}) # loads scripts_pchemprop.js
+	html += render_to_string('cts_app/04cts_uberinput_jquery.html', { 'model': "pchemprop"}) # loads scripts_pchemprop.js
 
 	# html += render_to_string('cts_testing/cts_pchem_testws.html')
 	# html += render_to_string('cts_testws_page.html', {})
@@ -189,10 +189,10 @@ def test_ws_page(request):
 	<br><br>
 	"""
 
-	html += render_to_string('cts_downloads.html', {'run_data': 'null'})
+	html += render_to_string('cts_app/cts_downloads.html', {'run_data': 'null'})
 
 	html += '<link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">'  # need this for progress bar to show?
-	html +=  render_to_string('cts_pchemprop_requests.html', 
+	html +=  render_to_string('cts_app/cts_pchemprop_requests.html', 
 		{
 			'checkedCalcsAndProps': {},
 			'kow_ph': 7.0,
@@ -202,20 +202,20 @@ def test_ws_page(request):
 			'nodejs_port': settings.NODEJS_PORT
 		}
 	)
-	html += render_to_string('cts_gentrans_tree.html', {'gen_max': 0})
+	html += render_to_string('cts_app/cts_gentrans_tree.html', {'gen_max': 0})
 
-	html = html + render_to_string('cts_export.html', {}, request=request)
+	html = html + render_to_string('cts_app/cts_export.html', {}, request=request)
 
-	html += render_to_string('07ubertext_end_drupal.html', {})
+	html += render_to_string('cts_app/07ubertext_end_drupal.html', {})
 	# html += ordered_list(model='cts/' + model, page='input')
 
 	#scripts and footer
-	html += render_to_string('09epa_drupal_ubertool_css.html', {})
-	html += render_to_string('09epa_drupal_cts_css.html')
+	html += render_to_string('cts_app/09epa_drupal_ubertool_css.html', {})
+	html += render_to_string('cts_app/09epa_drupal_cts_css.html')
 
 	# sending request to template with scripts_jchem added (will this work if template imports js and isn't in template itself?)
-	html += render_to_string('09epa_drupal_cts_scripts.html', request=request)
-	html += render_to_string('10epa_drupal_footer.html', {})
+	html += render_to_string('cts_app/09epa_drupal_cts_scripts.html', request=request)
+	html += render_to_string('cts_app/10epa_drupal_footer.html', {})
   
 	response = HttpResponse()
 	response.write(html)
