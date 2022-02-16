@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.urls import path
 # from django.contrib import admin
 # admin.autodiscover()
 from ..cts_testing import views
@@ -7,11 +7,11 @@ from ..cts_testing import views
 urlpatterns = [
 	# (r'^/?$', 'views.getCTSEndpoints'),
 
-	url(r'^$', views.validationTestPage),
+	path('', views.validationTestPage),
 	# url(r'^$', views.validationTestPage),
-	url(r'^csv/?$', views.createCSV),
-	url(r'^testws/?$', views.test_ws_page),
-	url(r'^testws/csv?$', views.create_testws_csv),
+	path('csv/', views.createCSV),
+	path('testws/', views.test_ws_page),
+	path('testws/csv', views.create_testws_csv),
 	# url(r'^output/?$', views.unitTestsOutputPage)
 	# url(r'^swag/?$', views.getSwaggerJsonContent),
 	# url(r'^docs/?$', cts_rest.showSwaggerPage),
