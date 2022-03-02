@@ -54,8 +54,8 @@ def validationTestPage(request, model='pchemprop', header='CTS'):
 			'kow_ph': 7.0,
 			'speciation_inputs': 'null',
 			'nodes': 'null',
-			'nodejs_host': settings.NODEJS_HOST,
-			'nodejs_port': settings.NODEJS_PORT
+			'nodejs_host': os.getenv("NODEJS_HOST"),
+			'nodejs_port': os.getenv("NODEJS_PORT")
 		}
 	)
 	html += render_to_string('cts_app/cts_gentrans_tree.html', {'gen_max': 0})
@@ -198,8 +198,8 @@ def test_ws_page(request):
 			'kow_ph': 7.0,
 			'speciation_inputs': 'null',
 			'nodes': 'null',
-			'nodejs_host': settings.NODEJS_HOST,
-			'nodejs_port': settings.NODEJS_PORT
+			'nodejs_host': os.getenv("NODEJS_HOST"),
+			'nodejs_port': os.getenv("NODEJS_PORT")
 		}
 	)
 	html += render_to_string('cts_app/cts_gentrans_tree.html', {'gen_max': 0})
